@@ -1,17 +1,13 @@
-from sklearn import datasets, svm
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer, TfidfVectorizer
+
+from sklearn import datasets
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.linear_model import SGDClassifier, Perceptron
 
-import numpy as np
-
-from sklearn.pipeline import Pipeline
-
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.model_selection import train_test_split
 
 print ("loading")
 
-resp = datasets.load_files('testclassifier/', encoding='utf-16')
+resp = datasets.load_files('testclassifier/', encoding='utf-8')
 
 train_data, eval_data, train_target, eval_target = train_test_split(resp.data, resp.target, test_size=0.1)
 
@@ -26,7 +22,9 @@ vtest_data = tfidf.transform(eval_data)
 
 print ("tuning")
 
-# clf = SGDClassifier(penalty='elasticnet')
+# loop through vtrain_data.data and vtest_data.data and create a new nd array with other things append. In order to add things to the vector, loop through train data
+# and extract features from that and then add it to the corresponding vtrain_data.data
+
 clf = MultinomialNB()
 clf.fit(vtrain_data, train_target)
 
@@ -39,7 +37,7 @@ print (x, y)
 print ("done")
 
 
-test_responsa = datasets.load_files('responsa/', encoding='utf-16')
+test_responsa = datasets.load_files('responsa/', encoding='utf-8')
 test_responsa_data = test_responsa.data
 test_responsa_target = test_responsa.target
 test_responsa_data = tfidf.transform(test_responsa_data)
