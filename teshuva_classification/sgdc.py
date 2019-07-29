@@ -1,8 +1,7 @@
-
+import numpy
 from sklearn import datasets
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
-
 from sklearn.model_selection import train_test_split
 
 print ("loading")
@@ -24,6 +23,40 @@ print ("tuning")
 
 # loop through vtrain_data.data and vtest_data.data and create a new nd array with other things append. In order to add things to the vector, loop through train data
 # and extract features from that and then add it to the corresponding vtrain_data.data
+
+# import citation bag of words
+f = open("/Users/adinacohen/Documents/GitHub/TeshuvaClassification/CRFSample-master/citationBagOfWords").readlines()
+bagOfWords = []
+for word in f:
+    word = word.strip("\n")
+    bagOfWords.append(word)
+
+# loop through the data and create a vector for the bag of words
+# keep track of which vector corresponds to which bit of data
+dataNum = 0
+for entry in vtrain_data.data:
+    entry = numpy.array(entry)
+    print(entry.shape)
+    for sent in train_data[dataNum]: #TODO: this line of code needs to be fixed to loop through words and not letters
+        sent = sent.strip().split()
+        bagVector = numpy.zeros(len(bagOfWords))
+        for word in sent:
+            for i, w in enumerate(bagOfWords):
+                if word == w:
+                    bagVector[i] += 1
+    entry = numpy.append(entry, bagVector)
+    print(entry.shape)
+    dataNum += 1
+
+# for file in train_data:
+#     for sent in file:
+#         sent = sent.strip.split()
+#         bagVector = numpy.zeros(len(bagOfWords))
+#         for word in sent:
+#             for i, w in enumerate(bagOfWords):
+#                 if word == w:
+#                     bagVector[i] += 1
+
 
 clf = MultinomialNB()
 clf.fit(vtrain_data, train_target)
