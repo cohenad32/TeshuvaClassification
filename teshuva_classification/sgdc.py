@@ -34,19 +34,21 @@ for word in f:
 # loop through the data and create a vector for the bag of words
 # keep track of which vector corresponds to which bit of data
 dataNum = 0
-for entry in vtrain_data.data:
-    entry = numpy.array(entry)
-    print(entry.shape)
-    for sent in train_data[dataNum]: #TODO: this line of code needs to be fixed to loop through words and not letters
-        sent = sent.strip().split()
+rows, cols = vtrain_data.shape
+for row in range(rows):
+    for entry in vtrain_data[row]:
+        # entry = numpy.array(entry)
+        # print(entry.shape)
+        sent = train_data[dataNum]
+        words = sent.split(" ")
         bagVector = numpy.zeros(len(bagOfWords))
-        for word in sent:
+        for word in words:
             for i, w in enumerate(bagOfWords):
                 if word == w:
                     bagVector[i] += 1
-    entry = numpy.append(entry, bagVector)
-    print(entry.shape)
-    dataNum += 1
+        entry = numpy.append(entry, bagVector, axis=50000)
+        # print(entry.shape)
+        dataNum += 1
 
 # for file in train_data:
 #     for sent in file:
