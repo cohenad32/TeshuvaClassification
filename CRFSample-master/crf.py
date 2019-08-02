@@ -9,25 +9,36 @@ from bs4 import BeautifulSoup as bs
 from bs4.element import Tag
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
+from sklearn import datasets
 
 data = []
 bagOfWords = []
 for i in range(1, 16):
     doc = []
     f = open(str(i) + '.tsv', encoding='utf-8')
+    prevLabel = ""
     for line in f:
         line = line.strip().split('\t')
         if len(line) > 2:
             if '#' not in line[0]:
                 if line[3].startswith("Citation\_Introduction"):
                     label = "Citation_Introduction"
-                    bagOfWords.append(line[2])
                     # label = "O"
                 elif line[3].startswith("Citation"):
                     label = "Citation"
-                    bagOfWords.append(line[2])
                 else: # line[3].startswith("_"):
                     label = "O"
+                if label == "Citation":
+                    if prevLabel != label:
+                        bagOfWords.append(line[2])
+                    else:
+                        lastEntry = bagOfWords[-1]
+                        if lastEntry[-1] in ['(', ')', '.', ':'] or line[2] in [".", ":", '\'']:
+                            bagOfWords[-1] = lastEntry + line[2]
+                        else:
+                            bagOfWords[-1] = lastEntry + " " + line[2]
+
+                prevLabel = label
                 doc.append((line[2], label))
     f.close()
     data.append(doc)
@@ -125,6 +136,40 @@ tagger = pycrfsuite.Tagger()
 tagger.open('crf.model')
 y_pred = [tagger.tag(xseq) for xseq in X_test]
 
+resp = datasets.load_files('/Users/adinacohen/Documents/GitHub/TeshuvaClassification/teshuva_classification/testclassifier/', encoding='utf-8')
+# allOfBeisYosef = resp.data
+allOfBeisYosef = []
+allOfBeisYosefFeatures = []
+lenBY = len(resp.data)
+for i in range(lenBY):
+    words = []
+    for word in resp.data[i].split(" "):
+        words.append((word, "None"))
+    allOfBeisYosef += [words]
+    allOfBeisYosefFeatures += [extract_features(words)]
+
+# allOfBeisYosefFeatures = [extract_features(doc) for doc in allOfBeisYosef]
+allOfBeisYosefTagged = [tagger.tag(siman) for siman in allOfBeisYosefFeatures]
+BYWordsAndTags = []
+for i in range(lenBY):
+    BYWordsAndTags += [zip(allOfBeisYosef[i], allOfBeisYosefTagged[i])]
+# BYWordsAndTags = zip(allOfBeisYosef, allOfBeisYosefTagged)
+
+prevLabel = ""
+newBagOfWords = []
+for siman in BYWordsAndTags:
+    for word in siman:
+        if word[1] == "Citation":
+            if prevLabel != "Citation":
+                newBagOfWords.append(word[0][0])
+            else:
+                lastCitation = newBagOfWords[-1]
+                if lastCitation[-1] in ['(', ')', '.', ':'] or word[0][0] in [".", ":", '\'']:
+                    newBagOfWords[-1] = lastCitation + word[0][0]
+                else:
+                    newBagOfWords[-1] = lastCitation + " " + word[0][0]
+        prevLabel = word[1]
+
 # Let's take a look at a random sample in the testing set
 i = 0
 for x, y in zip(y_pred[i], [x[1].split("=")[1] for x in X_test[i]]):
@@ -151,11 +196,11 @@ print('truths', truths)
 print(y_pred)
 print(X_test[0])
 
-# take the list of words and remove all duplicates
-bagOfWords = list(dict.fromkeys(bagOfWords))
+
 bagofWordsFile = open("citationBagOfWords", "w", encoding="utf-8")
-for word in bagOfWords:
+for word in newBagOfWords:
     bagofWordsFile.write(word + "\n")
 
 bagofWordsFile.close()
+
 
