@@ -30,8 +30,10 @@ tfidf = TfidfVectorizer(sublinear_tf=True, min_df=1, norm=None,
     )
 
 vtrain_data = tfidf.fit_transform(train_data)
+vtrain_data = vtrain_data.todense() # convert the vector to a dense list so that additional features can be added on later
 print('fit_transform complete')
 vtest_data = tfidf.transform(eval_data)
+vtest_data = vtest_data.todense()
 
 print ("tuning")
 
@@ -61,10 +63,12 @@ for row in range(rows):
             for i, w in enumerate(bagOfWords):
                 if word == w:
                     bagVector[i] += 1
-        # vtrain_data[row].data = numpy.append(vtrain_data[row].data, bagVector)
-        new_vtrain_data.append(numpy.append(vtrain_data[row].data, bagVector)) # take the bag of words vector and add it back to the tfidf vector
+        # vtrain_data[row] = numpy.append(vtrain_data[row], bagVector)
+        # new_vtrain_data.append(numpy.append(vtrain_data[row].tolist(), bagVector)) # take the bag of words vector and add it back to the tfidf vector
+        new_vtrain_data.append(vtrain_data[row].tolist())
+        new_vtrain_data.append(bagVector.tolist())
         dataNum += 1
-new_vtrain_data = numpy.asarray(new_vtrain_data)
+new_vtrain_data = numpy.asarray(new_vtrain_data).reshape(rows, cols + len(bagOfWords))
 
 # adding to the test vectors
 new_vtest_data = []
@@ -79,21 +83,21 @@ for row in range(rows):
             for i, w in enumerate(bagOfWords):
                 if word == w:
                     bagVector[i] += 1
-        # vtest_data[row].data = numpy.append(vtest_data[row].data, bagVector)
-        new_vtest_data.append(numpy.append(vtest_data[row].data, bagVector)) # add the bag of words vector to the tfidf vector
+        vtest_data[row] = numpy.append(vtest_data[row], bagVector)
+        # new_vtest_data.append(numpy.append(vtest_data[row].data, bagVector)) # add the bag of words vector to the tfidf vector
         dataNum += 1
-new_vtest_data = numpy.asarray(new_vtest_data)
+# new_vtest_data = numpy.asarray(new_vtest_data)
 
 # TODO: create a function that will transform all new data into vectors that include the bag of words
 # TODO: change the vectors being used in x and y to be the new vectors that include BoW
 
 clf = MultinomialNB()
-clf.fit(new_vtrain_data, train_target)
+clf.fit(vtrain_data, train_target)
 
 print('fitted, scoring:')
 
-x = clf.score(new_vtrain_data, train_target)
-y = clf.score(new_vtest_data, eval_target)
+x = clf.score(vtrain_data, train_target)
+y = clf.score(vtest_data, eval_target)
 
 print (x, y)
 print ("done")
@@ -103,6 +107,8 @@ test_responsa = datasets.load_files('responsa/', encoding='utf-8')
 test_responsa_data = test_responsa.data
 test_responsa_target = test_responsa.target
 test_responsa_data2 = tfidf.transform(test_responsa_data)
+test_responsa_data2 = test_responsa_data2.todense()
+
 
 # adding vectors to the test responsa - i.e continued transformation of the data
 new_test_responsa_data = []
@@ -119,8 +125,8 @@ for row in range(rows):
             for i, w in enumerate(bagOfWords):
                 if word == w:
                     bagVector[i] += 1
-        # test_responsa_data2[row].data = numpy.append(test_responsa_data2[row].data, bagVector)
-        new_test_responsa_data.append(numpy.append(test_responsa_data2[row].data, bagVector))
+        test_responsa_data2[row] = numpy.append(test_responsa_data2[row], bagVector)
+        # new_test_responsa_data.append(numpy.append(test_responsa_data2[row].data, bagVector))
         dataNum += 1
 
 y = clf.score(new_test_responsa_data, test_responsa_target)
